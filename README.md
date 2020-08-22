@@ -12,7 +12,7 @@ You may bypass the "Windows protected your PC" popup by clicking "More info". Al
 
 ## Configuration
 
-Configuration is written in JSON and stored in messages that you can edit at anytime.
+Configuration is written in JSON in a file called `GoldenSentry config.json`.
 
 ## Conpiling
 1. Create a folder named `Golden Sentry Discord IPS Bot` or whatever you fancy
