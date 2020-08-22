@@ -22,6 +22,7 @@ Configuration is written in JSON in a file called `GoldenSentry config.json`.
 5. Your folder structure should look like this
 
 ![Folder Structure](https://github.com/GhostNaix/Golden-Sentry/blob/master/Images/Folder%20Structure.png)
+
 6. Double Click Compile.bat
 7. Follow the prompts
 8. Your binaries are located in the folder `Golden Sentry Discord IPS` created in step 2
