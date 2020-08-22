@@ -1,5 +1,5 @@
 # Golden-Sentry
-A Discord IPS Bot that automatically kicks blacklisted users from the discord server 
+A Discord IPS Bot that automatically kicks blacklisted users from all discord server it joins on every scan interval 
 
 ## Setup
 
