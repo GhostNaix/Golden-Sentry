@@ -29,6 +29,9 @@ namespace GoldenSentry
         private static string DumpedInfo;
         private static int ScanInterval;
         private static SocketUser BlacklistInfo;
+        private static SocketUser UserInfo;
+        private static IRole RoleToAssign;
+        private static HttpStatusCode Error;
 
         static readonly Dictionary<LogSeverity, ConsoleColor> _severityColors = new Dictionary<LogSeverity, ConsoleColor>
         {
@@ -241,7 +244,7 @@ namespace GoldenSentry
                               "\n" +
                               "What happens when you enter your token ?:\n" +
                               "- GoldenSentry will save this token to the disk UNENCRYPTED.\n" +
-                              "- GoldenSentry will authenticate to Discord using this token, ACTING AS YOU.\n" +
+                              "- GoldenSentry will authenticate to Discord using this token.\n" +
                               "\n" +
                               "GoldenSentry makes no guarantee regarding your account's privacy nor safety.\n" +
                               "\n" +
@@ -300,7 +303,7 @@ namespace GoldenSentry
 
             _discord.Connected -= handleConnect;
 
-            Log(LogSeverity.Verbose, $"Golden Sentry authenticated as User: " + _discord.CurrentUser.Username + " with ID: " + _discord.CurrentUser.Id);
+            Log(LogSeverity.Verbose, $"Golden Sentry authenticated as Bot: " + _discord.CurrentUser.Username + " with ID: " + _discord.CurrentUser.Id);
 
             if (_config.StealthMode == true)
             {
@@ -487,11 +490,14 @@ namespace GoldenSentry
                         Log(LogSeverity.Debug, $"[== Command and Control Management ==]\n");
                         Log(LogSeverity.Info, $"{_config.prefix}authorize-user-id <id> - Allow another discord account to operate GoldenSentry.");
                         Log(LogSeverity.Info, $"{_config.prefix}unauthorized-user-id <id> - Removes an authorized user from operating GoldenSentry.");
+                        Log(LogSeverity.Info, $"{_config.prefix}search-authorized-users <id> - Search the database for an authorized user via User ID.");
+                        Log(LogSeverity.Info, $"{_config.prefix}list-authorized-user-ids - Shows a list of Authorized User IDs.");
+                        Log(LogSeverity.Info, $"{_config.prefix}assign-role <Role ID> <User ID> - Assign a role to a specified user id via Role Id.");
                         Log(LogSeverity.Info, $"{_config.prefix}poweroff - Shuts down GoldenSentry\n");
                         var chan = _discord.GetChannel(message.Channel.Id) as IMessageChannel;
                         Assist = $"```KEY: Command - Description.\n" + $"[== Assistance & information ==]\n" + $"{_config.prefix}assistance - Shows this help prompt for the GoldenSentry\n" + $"{_config.prefix}server-ip - Shows the IP of server that GoldenSentry is running on\n" + $"{_config.prefix}ips-status - Shows the current status of GoldenSentry\n" + $"{_config.prefix}blacklist - Shows a list of Blacklisted User IDs. ```\n";
                         OpMan = $"```[== Operations Management ==]\n" + $"{_config.prefix}toggle-stealth-mode - Cloaks GoldenSentry for extra stealth (This command will stop the bot from replying to your commands in discord while setting it's status to offline!)\n" + $"{_config.prefix}clear-blacklist - Clears all User IDs from the blacklist.\n" + $"{_config.prefix}add-blacklist <id> - Adds a User ID to blacklist.\n" + $"{_config.prefix}remove-blacklist <id> - Removes a User ID from blacklist.\n" + $"{_config.prefix}toggle-overwatch - Turns On/Off Overwatch (Soft banning) and automatically disables Longwatch.\n" + $"{_config.prefix}toggle-longwatch - Turns On/Off Longwatch (Hard banning) and automatically disables Overwatch.\n" + $"{_config.prefix}set-logging-channel - Sets IPS logging on the channel \n" + $"{_config.prefix}unset-logging-channel - Unsets IPS logging on the channel\n"+ $"{_config.prefix}search-blacklist - Searches the blacklist to return Blacklisted user information \n" + $"{_config.prefix}change-command-prefix <prefix> - Changes Golden Sentry's discord command prefix to a desired prefix \n" + $"{_config.prefix}set-scaninterval <seconds> - Set Golden Sentry member scan intervals (Default: 30 Seconds, Minimum: 10 Seconds, Max: 120 Seconds)``` \n";
-                        CommandAndControl = $"```[== Command and Control Management ==]\n" + $"{_config.prefix}authorize-user-id <id> - Allow another discord account to operate GoldenSentry.\n" + $"{_config.prefix}unauthorized-user-id <id> - Removes an authorized user from operating GoldenSentry.\n" + $"{_config.prefix}poweroff - Shuts down GoldenSentry ```\n";
+                        CommandAndControl = $"```[== Command and Control Management ==]\n" + $"{_config.prefix}authorize-user-id <id> - Allow another discord account to operate GoldenSentry.\n" + $"{_config.prefix}unauthorized-user-id <id> - Removes an authorized user from operating GoldenSentry.\n" + $"{_config.prefix}search-authorized-users <id> - Search the database for an authorized user via User ID\n" + $"{_config.prefix}list-authorized-user-ids - Shows a list of Authorized User IDs.\n" + $"{_config.prefix}assign-role <Role ID> <User ID> - Assign a role to a specified user id via Role Id.\n" + $"{_config.prefix}poweroff - Shuts down GoldenSentry ```\n";
                         if (_config.StealthMode == true)
                         {
                             Log(LogSeverity.Warning, $"Currently in stealth mode !");
@@ -510,6 +516,165 @@ namespace GoldenSentry
                         //Log(LogSeverity.Info, $"$");
                     }
                     return;
+
+                case "assign-role":
+                    {
+                        var UserID = argument.Substring(argument.IndexOf(' ') + 1);
+                        argument = argument.Remove(argument.IndexOf(' '));
+                        var channel = _discord.GetChannel(message.Channel.Id) as IMessageChannel;
+                        SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
+                        RoleToAssign = chnl.Guild.GetRole(Convert.ToUInt64(argument));
+                        Log(LogSeverity.Warning, $"{_config.prefix}assign-role command was requested by authorised user {message.Author.Username} executing !");
+                        if (RoleToAssign == null)
+                        {
+                            if (_config.StealthMode == true)
+                            {
+                                Log(LogSeverity.Warning, $"Currently in stealth mode !");
+                                Log(LogSeverity.Warning, $"De-cloak me using the {_config.prefix}toggle-stealth-mode command");
+                                Log(LogSeverity.Info, $"The role with the ID: {argument} does not exist within this server");
+                            }
+                            else
+                            {
+                                await channel.SendMessageAsync($"assign-role command was requested by authorised user {message.Author.Username} executing !");
+                                await channel.SendMessageAsync($"The role with the ID: {argument} does not exist within this server");
+                            }
+                        }
+                        else
+                        {
+                            try
+                            {
+                                await chnl.Guild.GetUser(Convert.ToUInt64(UserID)).AddRoleAsync(RoleToAssign);
+                                if (_config.StealthMode == true)
+                                {
+                                    Log(LogSeverity.Warning, $"Currently in stealth mode !");
+                                    Log(LogSeverity.Warning, $"De-cloak me using the {_config.prefix}toggle-stealth-mode command");
+                                    Log(LogSeverity.Info, $"Assigned the User with the ID {UserID} with the role with the ID {argument}");
+                                }
+                                else
+                                {
+                                    await channel.SendMessageAsync($"assign-role command was requested by authorised user {message.Author.Username} executing !");
+                                    await channel.SendMessageAsync($"Assigned the User with the ID `{UserID}` with the role with the ID `{argument}`");
+                                }
+                            }
+                            catch (Discord.Net.HttpException e)
+                            {
+                                Error = e.HttpCode;
+
+                                if (Error.ToString() == "Forbidden")
+                                {
+                                    if (_config.StealthMode == true)
+                                    {
+                                        Log(LogSeverity.Warning, $"Currently in stealth mode !");
+                                        Log(LogSeverity.Warning, $"De-cloak me using the {_config.prefix}toggle-stealth-mode command");
+                                        Log(LogSeverity.Info, $"Golden Sentry cannot assign this role with the ID {argument} to the user with ID `{UserID} due to insufficient privileges");
+                                    }
+                                    else
+                                    {
+                                        await channel.SendMessageAsync($"assign-role command was requested by authorised user {message.Author.Username} executing !");
+                                        await channel.SendMessageAsync($"Golden Sentry cannot assign this role with the ID `{argument}` to the user with ID `{UserID}` due to insufficient privileges");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return;
+
+                case "list-authorized-user-ids":
+                    {
+                        Log(LogSeverity.Warning, $"{_config.prefix}list-authorized-user-ids command was requested by authorised user {message.Author.Username} executing !");
+                        var author = message.Author;
+                        var channel = _discord.GetChannel(message.Channel.Id) as IMessageChannel;
+                        if (author.Id == _discord.CurrentUser.Id)
+                        {
+                            if (_config.StealthMode == true)
+                            {
+                                Log(LogSeverity.Warning, $"Currently in stealth mode !");
+                                Log(LogSeverity.Warning, $"De-cloak me using the {_config.prefix}toggle-stealth-mode command");
+                                Log(LogSeverity.Info, $"You may not inspect the authorized user database right now, doing so would elimnate the element of stealth");
+
+                            }
+
+                            else
+                            {
+                                Log(LogSeverity.Info, $"Sending authorized user database");
+                                await channel.SendMessageAsync("Authorized Users Ids: \n");
+                                foreach (ulong Id in _config.AuthorizedUserIDs)
+                                {
+                                    await channel.SendMessageAsync($"```{Id}```");
+                                }
+                            }
+
+
+                        }
+                        else if (_config.AuthorizedUserIDs.Contains(author.Id))
+                        {
+
+                            if (_config.StealthMode == true)
+                            {
+                                Log(LogSeverity.Warning, $"Currently in stealth mode !");
+                                Log(LogSeverity.Warning, $"De-cloak me using the {_config.prefix}toggle-stealth-mode command");
+                                Log(LogSeverity.Info, $"You may not inspect the authorized user database right now, doing so would elimnate the element of stealth");
+
+                            }
+
+                            else
+                            {
+                                Log(LogSeverity.Info, $"Sending authorized user database");
+                                await channel.SendMessageAsync($"list-authorized-user-ids command was requested by authorised user {message.Author.Username} executing !");
+                                await channel.SendMessageAsync("Authorized Users Ids: \n");
+                                foreach (ulong Id in _config.AuthorizedUserIDs)
+                                {
+                                    await channel.SendMessageAsync($"```{Id}```");
+                                }
+                            }
+                        }
+                    }
+                    return;
+
+                case "search-authorized-users":
+                    {
+                        var chan = _discord.GetChannel(message.Channel.Id) as IMessageChannel;
+                        Log(LogSeverity.Warning, $"{_config.prefix}search-authorized-users command was requested by authorised user {message.Author.Username} executing ! \n\n");
+                        //Code to Search authorized-users list
+                        if (_config.AuthorizedUserIDs.Contains(Convert.ToUInt64(argument)) == true)
+                        {
+                            if (_config.StealthMode == true)
+                            {
+                                UserInfo = _discord.GetUser(Convert.ToUInt64(argument));
+                                Log(LogSeverity.Warning, $"Currently in stealth mode !");
+                                Log(LogSeverity.Warning, $"De-cloak me using the $toggle-stealth-mode command");
+                                Log(LogSeverity.Info, $"The Specified User ID: {argument} exists within the Authorized Users Database!");
+                                Log(LogSeverity.Info, $"Discord Username: {UserInfo.Username}");
+
+                            }
+                            else
+                            {
+                                UserInfo = _discord.GetUser(Convert.ToUInt64(argument));
+                                await chan.SendMessageAsync($"search-authorized-users command was requested by authorised user {message.Author.Username} executing !");
+                                await chan.SendMessageAsync($"The Specified User ID `{argument}` exists within the Authorized Users Database!");
+                                DumpedInfo = $"`Discord Username: {UserInfo.Username}`";
+                                await chan.SendMessageAsync(DumpedInfo);
+                            }
+                        }
+                        else
+                        {
+                            if (_config.StealthMode == true)
+                            {
+                                Log(LogSeverity.Warning, $"Currently in stealth mode !");
+                                Log(LogSeverity.Warning, $"De-cloak me using the $toggle-stealth-mode command");
+                                Log(LogSeverity.Info, $"The Specified User ID: {argument} does not exist within the Authorized Users Database");
+
+                            }
+                            else
+                            {
+                                await chan.SendMessageAsync($"search-authorized-users command was requested by authorised user {message.Author.Username} executing !");
+                                await chan.SendMessageAsync($"The Specified User ID: `{argument}` does not exist the within Authorized Users Database");
+
+                            }
+                        }
+                    }
+                    return;
+                
                 case "search-blacklist":
                     {
                         var chan = _discord.GetChannel(message.Channel.Id) as IMessageChannel;
@@ -844,7 +1009,7 @@ namespace GoldenSentry
 
                 case "toggle-stealth-mode":
                     {
-                        Log(LogSeverity.Warning, $"{_config}stealth-mode command was requested by authorised user {message.Author.Username} executing !");
+                        Log(LogSeverity.Warning, $"{_config.prefix}stealth-mode command was requested by authorised user {message.Author.Username} executing !");
                         var chan = _discord.GetChannel(message.Channel.Id) as IMessageChannel;
                         if (_config.StealthMode == true)
                         {
@@ -906,7 +1071,8 @@ namespace GoldenSentry
                             {
                                 await chan.SendMessageAsync($"LongWatch Status: **OFFLINE !**");
                             }
-
+                            SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
+                            await chan.SendMessageAsync($"Current User count in Server: `{chnl.Guild.Users.Count}` ");
                         }
                     }
                     return;
@@ -1003,7 +1169,7 @@ namespace GoldenSentry
 
                             else
                             {
-                                Log(LogSeverity.Info, $"Sending watchlist");
+                                Log(LogSeverity.Info, $"Sending Blacklist");
                                 await channel.SendMessageAsync($"Blacklist command was requested by authorised user {message.Author.Username} executing !");
                                 await channel.SendMessageAsync("Blacklisted Users Ids: \n");
                                 foreach (ulong Id in _config.Blacklist)

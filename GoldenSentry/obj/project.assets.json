@@ -6129,13 +6129,13 @@
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
-    "version": "1.1.0.2",
+    "version": "1.1.1.2",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Naix\\Desktop\\Dist\\Golden Sentry Source Code\\GoldenSentry\\GoldenSentry.csproj",
+      "projectUniqueName": "C:\\Users\\Naix\\Desktop\\Github Repos\\Golden-Sentry\\GoldenSentry\\GoldenSentry.csproj",
       "projectName": "GoldenSentry Discord Security Bot",
-      "projectPath": "C:\\Users\\Naix\\Desktop\\Dist\\Golden Sentry Source Code\\GoldenSentry\\GoldenSentry.csproj",
+      "projectPath": "C:\\Users\\Naix\\Desktop\\Github Repos\\Golden-Sentry\\GoldenSentry\\GoldenSentry.csproj",
       "packagesPath": "C:\\Users\\Naix\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Naix\\Desktop\\Dist\\Golden Sentry Source Code\\GoldenSentry\\obj\\",
+      "outputPath": "C:\\Users\\Naix\\Desktop\\Github Repos\\Golden-Sentry\\GoldenSentry\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

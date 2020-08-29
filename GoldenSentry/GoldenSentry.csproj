@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>1.1.0.2</Version>
+    <Version>1.1.1.2</Version>
     <RepositoryType>N/A</RepositoryType>
     <RepositoryUrl>N/A</RepositoryUrl>
     <PackageProjectUrl>N/A</PackageProjectUrl>
@@ -18,6 +18,8 @@
     <PackageReleaseNotes>- Initial Release</PackageReleaseNotes>
     <LangVersion>latest</LangVersion>
     <Platforms>AnyCPU;x64;x86</Platforms>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
