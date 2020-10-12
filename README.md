@@ -14,7 +14,7 @@ You may bypass the "Windows protected your PC" popup by clicking "More info". Al
 
 Configuration is written in JSON in a file called `GoldenSentry config.json`.
 
-## Conpiling
+## Compiling
 1. Create a folder named `Golden Sentry Discord IPS Bot` or whatever you fancy
 2. Inside that folder create another folder named `Golden Sentry Discord IPS`
 3. Download/clone the Source code from this repository
